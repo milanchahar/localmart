@@ -27,6 +27,9 @@ export default function OwnerDashboardPage() {
           <Link to="/owner/products" className="rounded-md bg-slate-900 px-3 py-2 text-sm text-white">
             Products
           </Link>
+          <Link to="/owner/orders" className="rounded-md border border-slate-300 px-3 py-2 text-sm">
+            Orders
+          </Link>
           <Link to="/owner/profile" className="rounded-md border border-slate-300 px-3 py-2 text-sm">
             Shop Profile
           </Link>

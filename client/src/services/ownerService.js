@@ -28,3 +28,5 @@ export const getOwnerProducts = () => req("/owner/products");
 export const addOwnerProduct = (payload) => req("/owner/products", "POST", payload);
 export const editOwnerProduct = (id, payload) => req(`/owner/products/${id}`, "PATCH", payload);
 export const removeOwnerProduct = (id) => req(`/owner/products/${id}`, "DELETE");
+export const getOwnerOrders = () => req("/owner/orders");
+export const updateOwnerOrderStatus = (id, status) => req(`/owner/orders/${id}/status`, "PATCH", { status });

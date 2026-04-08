@@ -39,7 +39,12 @@ export default function CustomerHomePage() {
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-10">
-      <h1 className="text-2xl font-semibold">Nearby Shops</h1>
+      <div className="mb-3 flex items-center justify-between">
+        <h1 className="text-2xl font-semibold">Nearby Shops</h1>
+        <Link to="/orders" className="rounded-md border border-slate-300 px-3 py-2 text-sm">
+          My Orders
+        </Link>
+      </div>
 
       <form onSubmit={onSearch} className="mt-4 grid gap-2 md:grid-cols-4">
         <input className="rounded border px-3 py-2" placeholder="Pincode" value={pincode} onChange={(e) => setPincode(e.target.value)} />

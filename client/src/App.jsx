@@ -3,9 +3,12 @@ import AuthPage from "./pages/auth/AuthPage";
 import CustomerHomePage from "./pages/customer/CustomerHomePage";
 import CustomerShopPage from "./pages/customer/CustomerShopPage";
 import CustomerCartPage from "./pages/customer/CustomerCartPage";
+import CustomerOrdersPage from "./pages/customer/CustomerOrdersPage";
+import CustomerOrderDetailPage from "./pages/customer/CustomerOrderDetailPage";
 import OwnerDashboardPage from "./pages/owner/OwnerDashboardPage";
 import OwnerProductsPage from "./pages/owner/OwnerProductsPage";
 import OwnerProfilePage from "./pages/owner/OwnerProfilePage";
+import OwnerOrdersPage from "./pages/owner/OwnerOrdersPage";
 import AgentHomePage from "./pages/agent/AgentHomePage";
 import ProtectedRoute from "./components/ProtectedRoute";
 import { getHomeByRole, getRoleFromToken } from "./utils/auth";
@@ -51,6 +54,22 @@ export default function App() {
         }
       />
       <Route
+        path="/orders"
+        element={
+          <ProtectedRoute role="customer">
+            <CustomerOrdersPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/order/:id"
+        element={
+          <ProtectedRoute role="customer">
+            <CustomerOrderDetailPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
         path="/owner/dashboard"
         element={
           <ProtectedRoute role="shop_owner">
@@ -71,6 +90,14 @@ export default function App() {
         element={
           <ProtectedRoute role="shop_owner">
             <OwnerProfilePage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/owner/orders"
+        element={
+          <ProtectedRoute role="shop_owner">
+            <OwnerOrdersPage />
           </ProtectedRoute>
         }
       />

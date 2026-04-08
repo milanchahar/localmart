@@ -32,3 +32,5 @@ export const getShopById = (id, q = "") => {
   return req(`/customer/shops/${id}${qs}`);
 };
 export const placeCustomerOrder = (payload) => req("/customer/orders", "POST", payload);
+export const getCustomerOrders = () => req("/customer/orders");
+export const getCustomerOrderById = (id) => req(`/customer/orders/${id}`);

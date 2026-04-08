@@ -1,5 +1,6 @@
 const Shop = require("../models/Shop");
 const Product = require("../models/Product");
+const Order = require("../models/Order");
 const User = require("../models/User");
 
 const getOrCreateShop = async (user) => {
@@ -186,6 +187,43 @@ const deleteProduct = async (req, res) => {
   }
 };
 
+const getOrders = async (req, res) => {
+  try {
+    const shop = await getOrCreateShop(req.user);
+    const orders = await Order.find({ shopId: shop._id })
+      .populate("customerId", "name phone")
+      .sort({ createdAt: -1 });
+    return res.json({ orders });
+  } catch (err) {
+    return res.status(500).json({ message: "Failed to load orders" });
+  }
+};
+
+const updateOrderStatus = async (req, res) => {
+  try {
+    const shop = await getOrCreateShop(req.user);
+    const { id } = req.params;
+    const { status } = req.body;
+    const allowed = ["accepted", "cancelled", "picked"];
+
+    if (!allowed.includes(status)) {
+      return res.status(400).json({ message: "Invalid status" });
+    }
+
+    const order = await Order.findOne({ _id: id, shopId: shop._id });
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    order.status = status;
+    await order.save();
+
+    return res.json({ message: "Order status updated", order });
+  } catch (err) {
+    return res.status(500).json({ message: "Failed to update order status" });
+  }
+};
+
 module.exports = {
   getDashboard,
   getShopProfile,
@@ -194,4 +232,6 @@ module.exports = {
   createProduct,
   updateProduct,
   deleteProduct,
+  getOrders,
+  updateOrderStatus,
 };

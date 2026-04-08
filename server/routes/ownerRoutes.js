@@ -8,6 +8,8 @@ const {
   createProduct,
   updateProduct,
   deleteProduct,
+  getOrders,
+  updateOrderStatus,
 } = require("../controllers/ownerController");
 
 const router = express.Router();
@@ -22,5 +24,7 @@ router.get("/products", listProducts);
 router.post("/products", createProduct);
 router.patch("/products/:id", updateProduct);
 router.delete("/products/:id", deleteProduct);
+router.get("/orders", getOrders);
+router.patch("/orders/:id/status", updateOrderStatus);
 
 module.exports = router;
