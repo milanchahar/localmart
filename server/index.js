@@ -7,6 +7,7 @@ const healthRoutes = require("./routes/healthRoutes");
 const authRoutes = require("./routes/authRoutes");
 const protectedRoutes = require("./routes/protectedRoutes");
 const ownerRoutes = require("./routes/ownerRoutes");
+const customerRoutes = require("./routes/customerRoutes");
 
 dotenv.config();
 
@@ -20,6 +21,7 @@ app.use("/api/health", healthRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/protected", protectedRoutes);
 app.use("/api/owner", ownerRoutes);
+app.use("/api/customer", customerRoutes);
 
 app.get("/", (req, res) => {
   res.json({ message: "LocalMart API is running" });

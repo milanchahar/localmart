@@ -1,6 +1,8 @@
 import { Navigate, Route, Routes } from "react-router-dom";
 import AuthPage from "./pages/auth/AuthPage";
 import CustomerHomePage from "./pages/customer/CustomerHomePage";
+import CustomerShopPage from "./pages/customer/CustomerShopPage";
+import CustomerCartPage from "./pages/customer/CustomerCartPage";
 import OwnerDashboardPage from "./pages/owner/OwnerDashboardPage";
 import OwnerProductsPage from "./pages/owner/OwnerProductsPage";
 import OwnerProfilePage from "./pages/owner/OwnerProfilePage";
@@ -29,6 +31,22 @@ export default function App() {
         element={
           <ProtectedRoute role="customer">
             <CustomerHomePage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/shop/:id"
+        element={
+          <ProtectedRoute role="customer">
+            <CustomerShopPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/cart"
+        element={
+          <ProtectedRoute role="customer">
+            <CustomerCartPage />
           </ProtectedRoute>
         }
       />
