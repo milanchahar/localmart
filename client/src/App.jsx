@@ -2,6 +2,8 @@ import { Navigate, Route, Routes } from "react-router-dom";
 import AuthPage from "./pages/auth/AuthPage";
 import CustomerHomePage from "./pages/customer/CustomerHomePage";
 import OwnerDashboardPage from "./pages/owner/OwnerDashboardPage";
+import OwnerProductsPage from "./pages/owner/OwnerProductsPage";
+import OwnerProfilePage from "./pages/owner/OwnerProfilePage";
 import AgentHomePage from "./pages/agent/AgentHomePage";
 import ProtectedRoute from "./components/ProtectedRoute";
 import { getHomeByRole, getRoleFromToken } from "./utils/auth";
@@ -35,6 +37,22 @@ export default function App() {
         element={
           <ProtectedRoute role="shop_owner">
             <OwnerDashboardPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/owner/products"
+        element={
+          <ProtectedRoute role="shop_owner">
+            <OwnerProductsPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/owner/profile"
+        element={
+          <ProtectedRoute role="shop_owner">
+            <OwnerProfilePage />
           </ProtectedRoute>
         }
       />

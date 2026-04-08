@@ -6,6 +6,7 @@ const connectDb = require("./config/db");
 const healthRoutes = require("./routes/healthRoutes");
 const authRoutes = require("./routes/authRoutes");
 const protectedRoutes = require("./routes/protectedRoutes");
+const ownerRoutes = require("./routes/ownerRoutes");
 
 dotenv.config();
 
@@ -18,6 +19,7 @@ app.use(express.json());
 app.use("/api/health", healthRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/protected", protectedRoutes);
+app.use("/api/owner", ownerRoutes);
 
 app.get("/", (req, res) => {
   res.json({ message: "LocalMart API is running" });
