@@ -1,30 +1,52 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { getOwnerOrders, updateOwnerOrderStatus } from "../../services/ownerService";
+import { connectSocket, disconnectSocket } from "../../utils/socket";
 
 export default function OwnerOrdersPage() {
   const [orders, setOrders] = useState([]);
   const [err, setErr] = useState("");
+  const shopIdRef = useRef(null);
 
   const load = async () => {
     try {
       const res = await getOwnerOrders();
       setOrders(res.orders);
-    } catch (error) {
-      setErr(error.message);
+      if (res.orders.length > 0 && !shopIdRef.current) {
+        shopIdRef.current = res.orders[0].shopId;
+      }
+    } catch (e) {
+      setErr(e.message);
     }
   };
 
   useEffect(() => {
     load();
+
+    const socket = connectSocket();
+
+    const onNewOrder = () => load();
+    socket.on("new_order", onNewOrder);
+
+    return () => {
+      socket.off("new_order", onNewOrder);
+      disconnectSocket();
+    };
   }, []);
+
+  useEffect(() => {
+    if (shopIdRef.current) {
+      const socket = connectSocket();
+      socket.emit("join_shop", shopIdRef.current);
+    }
+  }, [orders]);
 
   const onStatus = async (id, status) => {
     try {
       await updateOwnerOrderStatus(id, status);
       await load();
-    } catch (error) {
-      setErr(error.message);
+    } catch (e) {
+      setErr(e.message);
     }
   };
 
@@ -45,28 +67,47 @@ export default function OwnerOrdersPage() {
           <div key={o._id} className="rounded-lg border border-slate-200 bg-white p-4">
             <div className="flex items-center justify-between">
               <p className="font-medium">{o.customerId?.name || "Customer"}</p>
-              <p className="text-sm uppercase text-slate-600">{o.status}</p>
+              <span className="rounded-full bg-slate-100 px-3 py-0.5 text-xs font-medium uppercase text-slate-700">
+                {o.status}
+              </span>
             </div>
-            <p className="text-sm text-slate-600">Phone: {o.customerId?.phone || "-"}</p>
-            <p className="text-sm text-slate-600">Address: {o.deliveryAddress}</p>
-            <p className="mt-1 text-sm font-medium">Total: Rs {o.totalAmount}</p>
-            <div className="mt-2 text-sm text-slate-600">
+            <p className="text-sm text-slate-500">Phone: {o.customerId?.phone || "-"}</p>
+            <p className="text-sm text-slate-500">Address: {o.deliveryAddress}</p>
+            <p className="mt-1 text-sm font-medium">Rs {o.totalAmount}</p>
+
+            <div className="mt-2 space-y-0.5 text-sm text-slate-600">
               {o.items.map((it) => (
                 <p key={it.productId}>
-                  {it.name} x {it.qty}
+                  {it.name} × {it.qty}
                 </p>
               ))}
             </div>
+
             <div className="mt-3 flex gap-2">
-              <button onClick={() => onStatus(o._id, "accepted")} className="rounded border px-2 py-1 text-sm">
-                Accept
-              </button>
-              <button onClick={() => onStatus(o._id, "cancelled")} className="rounded border px-2 py-1 text-sm">
-                Reject
-              </button>
-              <button onClick={() => onStatus(o._id, "picked")} className="rounded border px-2 py-1 text-sm">
-                Mark Ready
-              </button>
+              {o.status === "pending" ? (
+                <>
+                  <button
+                    onClick={() => onStatus(o._id, "accepted")}
+                    className="rounded border border-slate-300 px-3 py-1 text-sm hover:bg-slate-50"
+                  >
+                    Accept
+                  </button>
+                  <button
+                    onClick={() => onStatus(o._id, "cancelled")}
+                    className="rounded border border-slate-300 px-3 py-1 text-sm hover:bg-slate-50"
+                  >
+                    Reject
+                  </button>
+                </>
+              ) : null}
+              {o.status === "accepted" ? (
+                <button
+                  onClick={() => onStatus(o._id, "picked")}
+                  className="rounded border border-slate-300 px-3 py-1 text-sm hover:bg-slate-50"
+                >
+                  Mark Ready
+                </button>
+              ) : null}
             </div>
           </div>
         ))}
