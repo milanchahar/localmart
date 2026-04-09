@@ -10,6 +10,8 @@ import OwnerProductsPage from "./pages/owner/OwnerProductsPage";
 import OwnerProfilePage from "./pages/owner/OwnerProfilePage";
 import OwnerOrdersPage from "./pages/owner/OwnerOrdersPage";
 import AgentHomePage from "./pages/agent/AgentHomePage";
+import AgentActiveDeliveryPage from "./pages/agent/AgentActiveDeliveryPage";
+import AgentHistoryPage from "./pages/agent/AgentHistoryPage";
 import ProtectedRoute from "./components/ProtectedRoute";
 import { getHomeByRole, getRoleFromToken } from "./utils/auth";
 
@@ -106,6 +108,22 @@ export default function App() {
         element={
           <ProtectedRoute role="delivery_agent">
             <AgentHomePage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/agent/active"
+        element={
+          <ProtectedRoute role="delivery_agent">
+            <AgentActiveDeliveryPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/agent/history"
+        element={
+          <ProtectedRoute role="delivery_agent">
+            <AgentHistoryPage />
           </ProtectedRoute>
         }
       />

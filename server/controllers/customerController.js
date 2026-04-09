@@ -2,6 +2,7 @@ const Shop = require("../models/Shop");
 const Product = require("../models/Product");
 const Order = require("../models/Order");
 const User = require("../models/User");
+const socketManager = require("../utils/socket");
 
 const listShops = async (req, res) => {
   try {
@@ -106,6 +107,11 @@ const placeOrder = async (req, res) => {
       paymentStatus: paymentMode === "online" ? "pending" : "pending",
       deliveryAddress,
     });
+
+    const io = socketManager.get();
+    if (io) {
+      io.to(`shop_${shopId}`).emit("new_order", { orderId: order._id, shopId });
+    }
 
     return res.status(201).json({ message: "Order placed", order });
   } catch (err) {

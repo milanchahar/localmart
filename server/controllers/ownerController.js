@@ -2,6 +2,7 @@ const Shop = require("../models/Shop");
 const Product = require("../models/Product");
 const Order = require("../models/Order");
 const User = require("../models/User");
+const socketManager = require("../utils/socket");
 
 const getOrCreateShop = async (user) => {
   let shop = await Shop.findOne({ ownerId: user.userId });
@@ -217,6 +218,19 @@ const updateOrderStatus = async (req, res) => {
 
     order.status = status;
     await order.save();
+
+    const io = socketManager.get();
+    if (io) {
+      const eventMap = {
+        accepted: "order_accepted",
+        cancelled: "order_cancelled",
+        picked: "order_picked",
+      };
+      const event = eventMap[status];
+      if (event) {
+        io.to(`order_${order._id}`).emit(event, { orderId: order._id, status });
+      }
+    }
 
     return res.json({ message: "Order status updated", order });
   } catch (err) {
