@@ -1,6 +1,7 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { getActiveDelivery, updateDeliveryStatus } from "../../services/agentService";
+import DeliveryMap from "../../components/DeliveryMap";
 
 const STATUS_STEPS = ["accepted", "picked", "delivered"];
 
@@ -8,6 +9,8 @@ export default function AgentActiveDeliveryPage() {
   const [order, setOrder] = useState(null);
   const [err, setErr] = useState("");
   const [loading, setLoading] = useState(false);
+  const [agentLocation, setAgentLocation] = useState(null);
+  const watchRef = useRef(null);
   const navigate = useNavigate();
 
   const load = async () => {
@@ -21,6 +24,22 @@ export default function AgentActiveDeliveryPage() {
 
   useEffect(() => {
     load();
+
+    if (navigator.geolocation) {
+      watchRef.current = navigator.geolocation.watchPosition(
+        (pos) => {
+          setAgentLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+        },
+        () => {},
+        { enableHighAccuracy: true }
+      );
+    }
+
+    return () => {
+      if (watchRef.current != null) {
+        navigator.geolocation.clearWatch(watchRef.current);
+      }
+    };
   }, []);
 
   const nextStatus = () => {
@@ -60,18 +79,14 @@ export default function AgentActiveDeliveryPage() {
       </div>
 
       {err ? <p className="mb-4 text-red-600">{err}</p> : null}
-
       {!order && !err ? <p className="text-slate-600">Loading...</p> : null}
-
-      {!order && !err === false && !err ? (
+      {!order && err === "" ? null : !order ? (
         <p className="text-slate-600">No active delivery. Go accept one.</p>
       ) : null}
 
-      {order === null && !err ? null : !order ? (
-        <p className="text-slate-600">No active delivery. Go accept one.</p>
-      ) : (
-        <div className="rounded-lg border border-slate-200 bg-white p-5">
-          <div className="mb-4 flex items-center gap-3">
+      {order ? (
+        <div className="space-y-4">
+          <div className="mb-4 flex items-center gap-2">
             {STATUS_STEPS.map((s, i) => (
               <div key={s} className="flex items-center gap-2">
                 <span
@@ -92,45 +107,59 @@ export default function AgentActiveDeliveryPage() {
             ))}
           </div>
 
-          <div className="space-y-2 text-sm text-slate-600">
-            <p>
-              <span className="font-medium text-slate-800">Shop:</span>{" "}
-              {order.shopId?.name} — {order.shopId?.address}
-            </p>
-            <p>
-              <span className="font-medium text-slate-800">Customer:</span>{" "}
-              {order.customerId?.name} — {order.customerId?.phone}
-            </p>
-            <p>
-              <span className="font-medium text-slate-800">Deliver to:</span>{" "}
-              {order.deliveryAddress}
-            </p>
-            <p>
-              <span className="font-medium text-slate-800">Amount:</span> Rs{" "}
-              {order.totalAmount}
-            </p>
-          </div>
+          <DeliveryMap order={order} agentLocation={agentLocation} />
 
-          <div className="mt-4 space-y-1 text-sm text-slate-600">
-            <p className="font-medium text-slate-800">Items</p>
-            {order.items.map((it) => (
-              <p key={it.productId}>
-                {it.name} × {it.qty}
-              </p>
-            ))}
-          </div>
-
-          {next ? (
-            <button
-              onClick={onUpdate}
-              disabled={loading}
-              className="mt-6 rounded bg-slate-900 px-4 py-2 text-sm text-white disabled:opacity-60"
-            >
-              {loading ? "Updating..." : next === "picked" ? "Mark as Picked Up" : "Mark as Delivered"}
-            </button>
+          {!order.shopId?.coords?.lat ? (
+            <p className="text-xs text-slate-500">
+              Shop has no coordinates set — map shows default view.
+            </p>
           ) : null}
+
+          <div className="rounded-lg border border-slate-200 bg-white p-5">
+            <div className="space-y-2 text-sm text-slate-600">
+              <p>
+                <span className="font-medium text-slate-800">Shop:</span>{" "}
+                {order.shopId?.name} — {order.shopId?.address}
+              </p>
+              <p>
+                <span className="font-medium text-slate-800">Customer:</span>{" "}
+                {order.customerId?.name} — {order.customerId?.phone}
+              </p>
+              <p>
+                <span className="font-medium text-slate-800">Deliver to:</span>{" "}
+                {order.deliveryAddress}
+              </p>
+              <p>
+                <span className="font-medium text-slate-800">Amount:</span> Rs{" "}
+                {order.totalAmount}
+              </p>
+            </div>
+
+            <div className="mt-4 space-y-0.5 text-sm text-slate-600">
+              <p className="font-medium text-slate-800">Items</p>
+              {order.items.map((it) => (
+                <p key={it.productId}>
+                  {it.name} × {it.qty}
+                </p>
+              ))}
+            </div>
+
+            {next ? (
+              <button
+                onClick={onUpdate}
+                disabled={loading}
+                className="mt-5 rounded bg-slate-900 px-4 py-2 text-sm text-white disabled:opacity-60"
+              >
+                {loading
+                  ? "Updating..."
+                  : next === "picked"
+                  ? "Mark as Picked Up"
+                  : "Mark as Delivered"}
+              </button>
+            ) : null}
+          </div>
         </div>
-      )}
+      ) : null}
     </div>
   );
 }
