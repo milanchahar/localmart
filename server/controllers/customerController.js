@@ -2,6 +2,7 @@ const Shop = require("../models/Shop");
 const Product = require("../models/Product");
 const Order = require("../models/Order");
 const User = require("../models/User");
+const Review = require("../models/Review");
 const socketManager = require("../utils/socket");
 
 const listShops = async (req, res) => {
@@ -9,17 +10,15 @@ const listShops = async (req, res) => {
     const { pincode = "", category = "", q = "" } = req.query;
     const filter = {};
 
-    if (category) {
-      filter.category = new RegExp(category, "i");
-    }
-    if (q) {
-      filter.name = new RegExp(q, "i");
-    }
+    if (category) filter.category = new RegExp(category, "i");
+    if (q) filter.name = new RegExp(q, "i");
 
-    let shops = await Shop.find(filter).sort({ isOpen: -1, createdAt: -1 });
+    let shops = await Shop.find(filter).sort({ isOpen: -1, rating: -1, createdAt: -1 });
 
     if (pincode) {
-      shops = shops.filter((shop) => shop.address.toLowerCase().includes(String(pincode).toLowerCase()));
+      shops = shops.filter((shop) =>
+        shop.address.toLowerCase().includes(String(pincode).toLowerCase())
+      );
     }
 
     return res.json({ shops });
@@ -34,14 +33,10 @@ const getShopDetails = async (req, res) => {
     const { q = "" } = req.query;
 
     const shop = await Shop.findById(id);
-    if (!shop) {
-      return res.status(404).json({ message: "Shop not found" });
-    }
+    if (!shop) return res.status(404).json({ message: "Shop not found" });
 
     const filter = { shopId: shop._id, isAvailable: true };
-    if (q) {
-      filter.name = new RegExp(q, "i");
-    }
+    if (q) filter.name = new RegExp(q, "i");
 
     const products = await Product.find(filter).sort({ createdAt: -1 });
 
@@ -60,9 +55,7 @@ const placeOrder = async (req, res) => {
     }
 
     const shop = await Shop.findById(shopId);
-    if (!shop) {
-      return res.status(404).json({ message: "Shop not found" });
-    }
+    if (!shop) return res.status(404).json({ message: "Shop not found" });
 
     const ids = items.map((it) => it.productId);
     const products = await Product.find({ _id: { $in: ids }, shopId });
@@ -73,29 +66,16 @@ const placeOrder = async (req, res) => {
 
     for (const it of items) {
       const product = productMap.get(String(it.productId));
-      if (!product) {
-        return res.status(400).json({ message: "Invalid product in cart" });
-      }
+      if (!product) return res.status(400).json({ message: "Invalid product in cart" });
       const qty = Number(it.qty);
-      if (!qty || qty < 1) {
-        return res.status(400).json({ message: "Invalid quantity" });
-      }
+      if (!qty || qty < 1) return res.status(400).json({ message: "Invalid quantity" });
       if (product.stock < qty) {
         return res.status(400).json({ message: `${product.name} is out of stock` });
       }
-
       product.stock -= qty;
       await product.save();
-
-      const line = qty * product.price;
-      totalAmount += line;
-
-      finalItems.push({
-        productId: product._id,
-        name: product.name,
-        qty,
-        price: product.price,
-      });
+      totalAmount += qty * product.price;
+      finalItems.push({ productId: product._id, name: product.name, qty, price: product.price });
     }
 
     const order = await Order.create({
@@ -104,7 +84,7 @@ const placeOrder = async (req, res) => {
       items: finalItems,
       totalAmount,
       paymentMode: paymentMode === "online" ? "online" : "cod",
-      paymentStatus: paymentMode === "online" ? "pending" : "pending",
+      paymentStatus: "pending",
       deliveryAddress,
     });
 
@@ -122,9 +102,7 @@ const placeOrder = async (req, res) => {
 const getMyProfile = async (req, res) => {
   try {
     const user = await User.findById(req.user.userId).select("-password");
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
-    }
+    if (!user) return res.status(404).json({ message: "User not found" });
     return res.json({ user });
   } catch (err) {
     return res.status(500).json({ message: "Failed to load profile" });
@@ -149,15 +127,63 @@ const getMyOrderById = async (req, res) => {
       "shopId",
       "name address"
     );
+    if (!order) return res.status(404).json({ message: "Order not found" });
 
-    if (!order) {
-      return res.status(404).json({ message: "Order not found" });
-    }
+    const review = await Review.findOne({ orderId: id });
 
-    return res.json({ order });
+    return res.json({ order, review: review || null });
   } catch (err) {
     return res.status(500).json({ message: "Failed to load order" });
   }
 };
 
-module.exports = { listShops, getShopDetails, placeOrder, getMyProfile, getMyOrders, getMyOrderById };
+const submitReview = async (req, res) => {
+  try {
+    const { orderId, rating, comment } = req.body;
+
+    if (!orderId || !rating) {
+      return res.status(400).json({ message: "orderId and rating are required" });
+    }
+
+    const order = await Order.findOne({ _id: orderId, customerId: req.user.userId });
+    if (!order) return res.status(404).json({ message: "Order not found" });
+    if (order.status !== "delivered") {
+      return res.status(400).json({ message: "Can only review a delivered order" });
+    }
+
+    const existing = await Review.findOne({ orderId });
+    if (existing) return res.status(400).json({ message: "Already reviewed this order" });
+
+    const review = await Review.create({
+      customerId: req.user.userId,
+      shopId: order.shopId,
+      orderId,
+      rating: Number(rating),
+      comment: comment || "",
+    });
+
+    const all = await Review.find({ shopId: order.shopId });
+    const avg = all.reduce((sum, r) => sum + r.rating, 0) / all.length;
+    await Shop.findByIdAndUpdate(order.shopId, {
+      rating: Math.round(avg * 10) / 10,
+      totalRatings: all.length,
+    });
+
+    return res.status(201).json({ message: "Review submitted", review });
+  } catch (err) {
+    if (err.code === 11000) {
+      return res.status(400).json({ message: "Already reviewed this order" });
+    }
+    return res.status(500).json({ message: "Failed to submit review" });
+  }
+};
+
+module.exports = {
+  listShops,
+  getShopDetails,
+  placeOrder,
+  getMyProfile,
+  getMyOrders,
+  getMyOrderById,
+  submitReview,
+};

@@ -1,4 +1,4 @@
-import { Navigate, Route, Routes } from "react-router-dom";
+import { Navigate, Route, Routes, useLocation } from "react-router-dom";
 import AuthPage from "./pages/auth/AuthPage";
 import CustomerHomePage from "./pages/customer/CustomerHomePage";
 import CustomerShopPage from "./pages/customer/CustomerShopPage";
@@ -13,122 +13,138 @@ import AgentHomePage from "./pages/agent/AgentHomePage";
 import AgentActiveDeliveryPage from "./pages/agent/AgentActiveDeliveryPage";
 import AgentHistoryPage from "./pages/agent/AgentHistoryPage";
 import ProtectedRoute from "./components/ProtectedRoute";
+import Navbar from "./components/Navbar";
 import { getHomeByRole, getRoleFromToken } from "./utils/auth";
+
+function AppShell({ children }) {
+  const location = useLocation();
+  const isAuth = location.pathname === "/login" || location.pathname === "/register";
+  return (
+    <>
+      {!isAuth && <Navbar />}
+      {children}
+    </>
+  );
+}
 
 export default function App() {
   const role = getRoleFromToken();
   const authRedirect = getHomeByRole(role);
 
   return (
-    <Routes>
-      <Route path="/" element={<Navigate to={authRedirect} replace />} />
-      <Route
-        path="/login"
-        element={role ? <Navigate to={authRedirect} replace /> : <AuthPage mode="login" />}
-      />
-      <Route
-        path="/register"
-        element={role ? <Navigate to={authRedirect} replace /> : <AuthPage mode="register" />}
-      />
+    <AppShell>
+      <Routes>
+        <Route path="/" element={<Navigate to={authRedirect} replace />} />
+        <Route
+          path="/login"
+          element={role ? <Navigate to={authRedirect} replace /> : <AuthPage mode="login" />}
+        />
+        <Route
+          path="/register"
+          element={role ? <Navigate to={authRedirect} replace /> : <AuthPage mode="register" />}
+        />
 
-      <Route
-        path="/home"
-        element={
-          <ProtectedRoute role="customer">
-            <CustomerHomePage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/shop/:id"
-        element={
-          <ProtectedRoute role="customer">
-            <CustomerShopPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/cart"
-        element={
-          <ProtectedRoute role="customer">
-            <CustomerCartPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/orders"
-        element={
-          <ProtectedRoute role="customer">
-            <CustomerOrdersPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/order/:id"
-        element={
-          <ProtectedRoute role="customer">
-            <CustomerOrderDetailPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/owner/dashboard"
-        element={
-          <ProtectedRoute role="shop_owner">
-            <OwnerDashboardPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/owner/products"
-        element={
-          <ProtectedRoute role="shop_owner">
-            <OwnerProductsPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/owner/profile"
-        element={
-          <ProtectedRoute role="shop_owner">
-            <OwnerProfilePage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/owner/orders"
-        element={
-          <ProtectedRoute role="shop_owner">
-            <OwnerOrdersPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/agent/home"
-        element={
-          <ProtectedRoute role="delivery_agent">
-            <AgentHomePage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/agent/active"
-        element={
-          <ProtectedRoute role="delivery_agent">
-            <AgentActiveDeliveryPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/agent/history"
-        element={
-          <ProtectedRoute role="delivery_agent">
-            <AgentHistoryPage />
-          </ProtectedRoute>
-        }
-      />
+        <Route
+          path="/home"
+          element={
+            <ProtectedRoute role="customer">
+              <CustomerHomePage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/shop/:id"
+          element={
+            <ProtectedRoute role="customer">
+              <CustomerShopPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/cart"
+          element={
+            <ProtectedRoute role="customer">
+              <CustomerCartPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/orders"
+          element={
+            <ProtectedRoute role="customer">
+              <CustomerOrdersPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/order/:id"
+          element={
+            <ProtectedRoute role="customer">
+              <CustomerOrderDetailPage />
+            </ProtectedRoute>
+          }
+        />
 
-      <Route path="*" element={<Navigate to="/login" replace />} />
-    </Routes>
+        <Route
+          path="/owner/dashboard"
+          element={
+            <ProtectedRoute role="shop_owner">
+              <OwnerDashboardPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/owner/products"
+          element={
+            <ProtectedRoute role="shop_owner">
+              <OwnerProductsPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/owner/profile"
+          element={
+            <ProtectedRoute role="shop_owner">
+              <OwnerProfilePage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/owner/orders"
+          element={
+            <ProtectedRoute role="shop_owner">
+              <OwnerOrdersPage />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/agent/home"
+          element={
+            <ProtectedRoute role="delivery_agent">
+              <AgentHomePage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/agent/active"
+          element={
+            <ProtectedRoute role="delivery_agent">
+              <AgentActiveDeliveryPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/agent/history"
+          element={
+            <ProtectedRoute role="delivery_agent">
+              <AgentHistoryPage />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route path="*" element={<Navigate to="/login" replace />} />
+      </Routes>
+    </AppShell>
   );
 }

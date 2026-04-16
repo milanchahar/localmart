@@ -7,6 +7,7 @@ const {
   getMyProfile,
   getMyOrders,
   getMyOrderById,
+  submitReview,
 } = require("../controllers/customerController");
 
 const router = express.Router();
@@ -17,5 +18,6 @@ router.post("/orders", protect, allowRoles("customer"), placeOrder);
 router.get("/orders", protect, allowRoles("customer"), getMyOrders);
 router.get("/orders/:id", protect, allowRoles("customer"), getMyOrderById);
 router.get("/me", protect, allowRoles("customer"), getMyProfile);
+router.post("/reviews", protect, allowRoles("customer"), submitReview);
 
 module.exports = router;

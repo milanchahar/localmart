@@ -14,6 +14,7 @@ const protectedRoutes = require("./routes/protectedRoutes");
 const ownerRoutes = require("./routes/ownerRoutes");
 const customerRoutes = require("./routes/customerRoutes");
 const agentRoutes = require("./routes/agentRoutes");
+const paymentRoutes = require("./routes/paymentRoutes");
 
 const app = express();
 const server = http.createServer(app);
@@ -27,12 +28,13 @@ app.use("/api/protected", protectedRoutes);
 app.use("/api/owner", ownerRoutes);
 app.use("/api/customer", customerRoutes);
 app.use("/api/agent", agentRoutes);
+app.use("/api/payment", paymentRoutes);
 
 app.get("/", (req, res) => {
   res.json({ message: "LocalMart API is running" });
 });
 
-const port = process.env.PORT || 5000;
+const port = process.env.PORT || 5001;
 
 const startServer = async () => {
   try {

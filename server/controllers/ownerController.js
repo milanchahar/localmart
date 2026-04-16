@@ -25,26 +25,45 @@ const getOrCreateShop = async (user) => {
 const getDashboard = async (req, res) => {
   try {
     const shop = await getOrCreateShop(req.user);
-    const totalProducts = await Product.countDocuments({ shopId: shop._id });
-    const lowStockCount = await Product.countDocuments({ shopId: shop._id, stock: { $lte: 5 } });
-    const availableCount = await Product.countDocuments({ shopId: shop._id, isAvailable: true });
+
+    const todayStart = new Date();
+    todayStart.setHours(0, 0, 0, 0);
+
+    const [totalProducts, lowStockCount, availableCount, todayOrders, pendingOrders, allOrders] =
+      await Promise.all([
+        Product.countDocuments({ shopId: shop._id }),
+        Product.countDocuments({ shopId: shop._id, stock: { $lte: 5 } }),
+        Product.countDocuments({ shopId: shop._id, isAvailable: true }),
+        Order.find({ shopId: shop._id, createdAt: { $gte: todayStart } }),
+        Order.countDocuments({ shopId: shop._id, status: "pending" }),
+        Order.find({ shopId: shop._id, status: { $in: ["delivered", "picked"] } }).select(
+          "totalAmount"
+        ),
+      ]);
+
+    const todayRevenue = todayOrders
+      .filter((o) => ["delivered", "picked", "accepted"].includes(o.status))
+      .reduce((sum, o) => sum + o.totalAmount, 0);
+
+    const totalRevenue = allOrders.reduce((sum, o) => sum + o.totalAmount, 0);
 
     return res.json({
-      shop: {
-        id: shop._id,
-        name: shop.name,
-        isOpen: shop.isOpen,
-      },
+      shop: { id: shop._id, name: shop.name, isOpen: shop.isOpen, rating: shop.rating },
       stats: {
         totalProducts,
         lowStockCount,
         availableCount,
+        todayOrders: todayOrders.length,
+        todayRevenue,
+        pendingOrders,
+        totalRevenue,
       },
     });
   } catch (err) {
     return res.status(500).json({ message: "Failed to load dashboard" });
   }
 };
+
 
 const getShopProfile = async (req, res) => {
   try {
