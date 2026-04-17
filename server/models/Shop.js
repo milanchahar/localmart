@@ -2,7 +2,7 @@ const mongoose = require("mongoose");
 
 const shopSchema = new mongoose.Schema(
   {
-    ownerId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true, unique: true },
+    ownerId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
     name: { type: String, required: true, trim: true },
     category: { type: String, required: true, trim: true },
     address: { type: String, required: true, trim: true },
