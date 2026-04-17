@@ -19,7 +19,9 @@ const paymentRoutes = require("./routes/paymentRoutes");
 const app = express();
 const server = http.createServer(app);
 
-app.use(cors());
+app.use(cors({
+  origin: ["http://localhost:5173", "https://localmart-sepia.vercel.app"]
+}));
 app.use(express.json());
 
 app.use("/api/health", healthRoutes);
